@@ -1,4 +1,4 @@
-Source: brig
+Source: brig-ipfs
 Section: unknown
 Priority: optional
 Maintainer: Eugeniy Mikhailov <evgmik@gmail.com>
@@ -6,7 +6,7 @@ Build-Depends: debhelper (>=11~)
 Standards-Version: 4.1.4
 Homepage: https://github.com/sahib/brig
 
-Package: brig
+Package: brig-ipfs
 Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}
