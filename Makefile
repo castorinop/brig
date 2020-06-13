@@ -1,7 +1,7 @@
 # RUN_PREFIX : what the prefix is when the software is run. usually the same as PREFIX
 PREFIX?=/usr
 INSTALLDIR?=$(DESTDIR)$(PREFIX)
-DOCDIR?=$(INSTALLDIR)/share/doc/brig
+DOCDIR?=$(INSTALLDIR)/share/doc/brig-ipfs
 RUN_PREFIX?=$(PREFIX)
 
 build:
