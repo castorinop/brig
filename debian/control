@@ -1,0 +1,23 @@
+Source: brig
+Section: unknown
+Priority: optional
+Maintainer: Eugeniy Mikhailov <evgmik@gmail.com>
+Build-Depends: debhelper (>=11~)
+Standards-Version: 4.1.4
+Homepage: https://github.com/sahib/brig
+
+Package: brig
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: File synchronization on top of ipfs with git like interface& web based UI 
+ brig is a distributed & secure file synchronization tool with version control.
+ It is based on IPFS, written in Go and will feel familiar to git users.
+ Key feature highlights:
+    - Encryption of data in rest and transport + compression on the fly.
+    - Simplified git version control.
+    - Sync algorithm that can handle moved files and empty directories and files.
+    - Your data does not need to be stored on the device you are currently using.
+    - FUSE filesystem that feels like a normal (sync) folder.
+    - No central server at all. Still, central architectures can be build with brig.
+    - Simple user identification and discovery with users that look like email addresses.
