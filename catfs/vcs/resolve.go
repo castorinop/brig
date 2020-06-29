@@ -219,6 +219,7 @@ func (rv *resolver) hasConflictFile(dstNd n.ModNode) (bool, error) {
 	}
 
 	for _, child := range children {
+		if child.Type() == n.NodeTypeGhost { continue }
 		if isConflictPath(child.Path()) {
 			// Also check if the conflict file belongs to our node:
 			return strings.HasPrefix(child.Path(), dstNd.Path()), nil
@@ -284,7 +285,7 @@ func (rv *resolver) hasConflicts(src, dst n.ModNode) (bool, ChangeType, ChangeTy
 	if len(srcHist) > 0 && len(dstHist) == 0 {
 		// We can "fast forward" our node.
 		// There are only remote changes for this file.
-		return false, 0, 0, nil
+		return false, srcMask, dstMask, nil
 
 	}
 	if len(srcHist) == 0 && len(dstHist) > 0 {

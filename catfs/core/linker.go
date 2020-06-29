@@ -384,7 +384,10 @@ func (lkr *Linker) CommitByIndex(index int64) (*n.Commit, error) {
 			return status, nil
 		}
 
-		return nil, nil
+		owner, _ := lkr.Owner()
+		errmsg := fmt.Sprintf("No commit with index %v for owner `%v`", index, owner)
+		log.Error(errmsg)
+		return nil, ie.NoSuchCommitIndex(index)
 	}
 
 	hash, err := h.FromB58String(string(b58Hash))

@@ -122,13 +122,14 @@ func handleHistory(ctx *cli.Context, ctl *client.Client) error {
 
 		fmt.Fprintf(
 			tabW,
-			"%s\t%s\t%s\t%s\t%s\t%s\t\n",
+			"%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			changeDesc,
 			color.CyanString(commitName(entry.Next)),
 			color.GreenString(commitName(entry.Head)),
 			what,
 			when,
 			pinStateToSymbol(entry.IsPinned, entry.IsExplicit),
+			entry.Head.Msg,
 		)
 	}
 
@@ -202,29 +203,39 @@ func printDiffTreeLineFormatter(types map[string]diffEntry, n *treeNode) string 
 	if diffEntry, ok := types[n.entry.Path]; ok {
 		switch diffEntry.typ {
 		case diffTypeAdded:
-			return color.GreenString(" + " + suffixIfDir(n))
+			return color.GreenString(" + " + "▩ ← " + suffixIfDir(n))
 		case diffTypeRemoved:
-			return color.RedString(" - " + suffixIfDir(n))
+			return color.RedString(" - " + suffixIfDir(n) + " ← ▩")
 		case diffTypeMissing:
-			return color.MagentaString(" _ " + suffixIfDir(n))
+			return color.MagentaString(" _ " + suffixIfDir(n) + " → ▩")
 		case diffTypeIgnored:
 			return color.YellowString(" * " + suffixIfDir(n))
 		case diffTypeMoved:
-			dstPath := makePathAbbrev(diffEntry.pair.Dst, diffEntry.pair.Src)
-			srcBase := path.Base(diffEntry.pair.Src.Path)
+			srcPath := makePathAbbrev(diffEntry.pair.Dst, diffEntry.pair.Src)
+			dstBase := path.Base(diffEntry.pair.Dst.Path)
 			if diffEntry.pair.Src.IsDir {
-				srcBase += "/"
+				dstBase += "/"
 			}
 
-			return color.CyanString(fmt.Sprintf(" %s → %s", srcBase, dstPath))
+			return color.CyanString(fmt.Sprintf(" %s ↔ %s", dstBase, srcPath))
 		case diffTypeMerged:
 			dstPath := makePathAbbrev(diffEntry.pair.Dst, diffEntry.pair.Src)
 			srcBase := path.Base(diffEntry.pair.Src.Path)
 			if diffEntry.pair.Src.IsDir {
 				srcBase += "/"
 			}
+			// Attempt to figure out which way merge should go
+			// based on modification times.
+			// This information was available at resolver time in the PairDiff
+			// but server returns simplified PairDiff without modification masks.
+			srcModTime := diffEntry.pair.Src.ModTime
+			dstModTime := diffEntry.pair.Dst.ModTime
+			var mergeSymbol string = color.MagentaString("→")
+			if srcModTime.After(dstModTime) {
+				mergeSymbol = color.GreenString("←")
+			}
 
-			return color.WhiteString(fmt.Sprintf(" %s ⇄ %s", dstPath, srcBase))
+			return color.WhiteString(fmt.Sprintf(" %s %s %s ", dstPath, mergeSymbol, srcBase))
 		case diffTypeConflict:
 			dstPath := makePathAbbrev(diffEntry.pair.Dst, diffEntry.pair.Src)
 			srcBase := path.Base(diffEntry.pair.Src.Path)
@@ -363,16 +374,52 @@ func printDiff(diff *client.Diff, printMissing bool) {
 		fmt.Println()
 	}
 
-	simpleSection(color.GreenString("Added:"), diff.Added)
-	simpleSection(color.YellowString("Ignored:"), diff.Ignored)
-	simpleSection(color.RedString("Removed:"), diff.Removed)
+	var addedAtRemote []client.DiffPair
+	for _, src := range diff.Added {
+		var pair client.DiffPair
+		pair.Dst.Path = "▩"
+		pair.Src = src
+		addedAtRemote = append(addedAtRemote, pair)
+	}
+	pairSection(color.GreenString("Added:"), "←", addedAtRemote)
 
-	if printMissing {
-		simpleSection(color.RedString("Missing:"), diff.Missing)
+	simpleSection(color.YellowString("Ignored:"), diff.Ignored)
+
+	var removedAtRemote []client.DiffPair
+	for _, dst := range diff.Removed {
+		var pair client.DiffPair
+		pair.Dst = dst
+		pair.Src.Path = "▩"
+		removedAtRemote = append(removedAtRemote, pair)
+	}
+	pairSection(color.RedString("Removed:"), "←", removedAtRemote)
+
+	// split diff.Merged to changedLocally and changedRemotely arrays
+	var changedLocally, changedRemotely []client.DiffPair
+	for _, pair := range diff.Merged {
+		srcModTime := pair.Src.ModTime
+		dstModTime := pair.Dst.ModTime
+		if srcModTime.After(dstModTime) {
+			changedRemotely = append(changedRemotely, pair)
+		} else {
+			changedLocally = append(changedLocally, pair)
+		}
 	}
 
-	pairSection(color.CyanString("Moved:"), "→", diff.Moved)
-	pairSection(color.WhiteString("Resolved Conflicts:"), "⇄", diff.Merged)
+	if printMissing {
+		var missedAtRemote []client.DiffPair
+		for _, dst := range diff.Missing {
+			var pair client.DiffPair
+			pair.Dst = dst
+			pair.Src.Path = "▩"
+			missedAtRemote = append(missedAtRemote, pair)
+		}
+		pairSection(color.RedString("Missing:"), "→", missedAtRemote)
+	}
+
+	pairSection(color.CyanString("Moved:"), "↔", diff.Moved)
+	pairSection(color.WhiteString("Changed Locally:"), "→", changedLocally)
+	pairSection(color.WhiteString("Changed Remotely:"), "←", changedRemotely)
 	pairSection(color.MagentaString("Conflicts:"), "⚡", diff.Conflict)
 }
 

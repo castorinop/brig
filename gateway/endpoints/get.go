@@ -110,6 +110,10 @@ func (gh *GetHandler) checkDownloadRight(w http.ResponseWriter, r *http.Request)
 		return false
 	}
 
+	return gh.checkDownloadRightByName(name, w, r)
+}
+
+func (gh *GetHandler) checkDownloadRightByName(name string, w http.ResponseWriter, r *http.Request) bool {
 	user, err := gh.userDb.Get(name)
 	if err != nil {
 		return false
@@ -138,7 +142,7 @@ func (gh *GetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !gh.cfg.Bool("auth.anon_allowed") {
+	if gh.cfg.Bool("auth.anon_allowed") {
 		// validatePath will check if the user is actually logged in
 		// and may access the path in question. The login could come
 		// from a previous login to the UI (the /get endpoint could be used separately)
@@ -152,7 +156,9 @@ func (gh *GetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			if !gh.checkDownloadRight(w, r) {
+			// Check if the user allowed the anon user to download files.
+			anonName := gh.cfg.String("auth.anon_user")
+			if !gh.checkDownloadRightByName(anonName, w, r) {
 				http.Error(w, "insufficient rights", http.StatusUnauthorized)
 				return
 			}
@@ -160,6 +166,10 @@ func (gh *GetHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// All good. Proceed with the content.
 	} else {
+		if !gh.validatePath(nodePath, w, r) {
+			http.Error(w, "insufficient rights", http.StatusUnauthorized)
+			return
+		}
 		if !gh.checkDownloadRight(w, r) {
 			http.Error(w, "insufficient rights for anon", http.StatusUnauthorized)
 			return

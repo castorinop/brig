@@ -40,6 +40,27 @@ func IsErrNoSuchRef(err error) bool {
 
 /////////////////
 
+// ErrNoSuchCommitIndex is returned when a bad commit was used
+type ErrNoSuchCommitIndex struct {
+	index int64
+}
+
+func (e ErrNoSuchCommitIndex) Error() string {
+	return fmt.Sprintf("No commit with index `%d` found", e.index)
+}
+
+func NoSuchCommitIndex(ind int64) error {
+	return &ErrNoSuchCommitIndex{ind} 
+}
+
+// IsErrNoSuchRef checks if `err` is a no such ref error.
+func IsErrNoSuchCommitIndex(err error) bool {
+	_, ok := err.(*ErrNoSuchCommitIndex)
+	return ok
+}
+
+/////////////////
+
 type errNoSuchFile struct {
 	path string
 }
