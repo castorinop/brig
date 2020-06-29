@@ -1,3 +1,50 @@
+brig-ipfs (0.4.2~2.ded5d821) buster-evmik; urgency=medium
+
+  [ Chris Pahl ]
+  * bump internal version to 0.4.2-beta
+  * gateway: fix typo in hash algo name
+  * push stable ipfs fallback to 0.4.20
+  * gateway: fix anon access for /get via curl or similar
+  * install ipfs 0.4.22 in case no binary is available
+
+  [ Eugeniy E. Mikhailov ]
+  * debianization by evmik
+  * change package name to resolve classhing with another debian brig
+  * fixing location of docs
+  * bug-fix: fixing fast forward changes of source to destination
+  * bug-fix: skip ghost node when checking for conflict file
+  * bug-fix: sync now adds a source file when the same path in destination belongs to a ghost
+  * feature: show merge direction
+  * feature: Resolved conflict changed to Changed Locally or Remotely lists
+  * fix: diff "Moved" output dst on left and src on right
+  * mapper should not report directories which exist on both sides
+  * moved symbol changed from → to ↔, this indicates that it depends on point of view
+  * Preserve source time when staging from a known mode
+  * safety net around attempt to MakePatch from nonexisting commit
+  * safety net against request of non-existing commit for corrupter DB
+  * better display of missing entries
+  * better display of added entries
+  * improved display of removed items
+  * go fmt for cmd/vcs_handlers.go
+  * fix: correct behavior for resurrected at remote/src files
+  * introducing new error: ErrNoSuchCommitIndex and making use of it
+  * redid how ErrNoSuchCommitIndex error is done
+  * patch.go: nicer code format
+  * do not add ghost from source during syncing
+  * added commit message to the log output
+  * cleaner commit message at auto commit if haveStagedChanges is true at MakePatch
+  * added mechanism to generate patches between two arbitrary revisions
+  * metadata is fetched in patch by patch fashion to preserve modification history
+  * bug fix: gateway 'get' checks against authorized user and not anon_user as before
+  * bug fix: do not allow to download/view files outside of permitted folders
+  * improved help output for: 'brig gateway user add'
+  * bumped up to 0.5.0-beta
+  * modules compatible with go v1.14
+  * remove unused packages
+  * updated modules versions
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Sun, 28 Jun 2020 21:35:10 -0400
+
 brig-ipfs (0.4.2~1.gbp1c9f62) buster-evmik; urgency=medium
 
   ** SNAPSHOT build @1c9f62cb0bf179d5ba0e35edd62c2e373bda783e **
