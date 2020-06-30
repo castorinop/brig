@@ -1,3 +1,10 @@
+brig-ipfs (0.4.2~3.46e22d7d) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * bug-fix: when adding during sync do the pinning on the destination
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Mon, 29 Jun 2020 23:44:29 -0400
+
 brig-ipfs (0.4.2~2.ded5d821) buster-evmik; urgency=medium
 
   [ Chris Pahl ]
