@@ -1,3 +1,10 @@
+brig-ipfs (0.4.2~5.f7a6677d) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * bug-fix: added synchronization of  the cachedSize
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Sat, 04 Jul 2020 12:25:03 -0400
+
 brig-ipfs (0.4.2~4.e0afad19) buster-evmik; urgency=medium
 
   [ Eugeniy E. Mikhailov ]
