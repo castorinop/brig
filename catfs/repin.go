@@ -46,6 +46,11 @@ func (fs *FS) partitionNodeHashes(nd n.ModNode, minDepth, maxDepth int64) (*part
 		state := walker.State()
 		curr := state.Curr
 
+		if curr.Type() == n.NodeTypeGhost {
+			// ghosts nodes are always unpinned
+			continue
+		}
+
 		if seen[curr.BackendHash().B58String()] {
 			// We only want to have the first $n distinct versions.
 			// Sometimes the versions is duplicated though (removed, readded, moved)
@@ -96,6 +101,10 @@ func (fs *FS) ensurePin(entries []n.ModNode) (uint64, error) {
 		}
 
 		if !isPinned {
+			if nd.Type() == n.NodeTypeGhost {
+				// ghosts cannot be pinned
+				return 0, nil
+			}
 			if err := fs.pinner.PinNode(nd, false); err != nil {
 				return 0, err
 			}
@@ -217,6 +226,7 @@ func (fs *FS) repin(root string) error {
 	}
 
 	totalStorage := uint64(0)
+	addedToStorage := uint64(0)
 	savedStorage := uint64(0)
 	parts := []*partition{}
 
@@ -248,7 +258,8 @@ func (fs *FS) repin(root string) error {
 		}
 
 		totalStorage += part.PinSize
-		savedStorage += (-pinBytes + unpinBytes)
+		addedToStorage += pinBytes
+		savedStorage += unpinBytes
 
 		parts = append(parts, part)
 		return nil
@@ -264,7 +275,13 @@ func (fs *FS) repin(root string) error {
 	}
 
 	savedStorage += quotaUnpins
-	log.Infof("repin finished; unpinned %s", humanize.Bytes(savedStorage))
+	totalStorage -= quotaUnpins
+
+	if savedStorage >= addedToStorage{
+		log.Infof("repin finished; freed %s, total storage is %s", humanize.Bytes(savedStorage-addedToStorage), humanize.Bytes(totalStorage))
+	} else {
+		log.Infof("repin finished; used extra %s, total storage is %s", humanize.Bytes(addedToStorage-savedStorage), humanize.Bytes(totalStorage))
+	}
 	return nil
 }
 

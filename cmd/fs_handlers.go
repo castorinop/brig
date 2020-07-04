@@ -337,7 +337,7 @@ func handleList(ctx *cli.Context, ctl *client.Client) error {
 			userColumn = "USER\t"
 		}
 
-		fmt.Fprintf(tabW, "SIZE\tMODTIME\t%sPATH\tPIN\t\n", userColumn)
+		fmt.Fprintf(tabW, "SIZE\tBKEND\tMODTIME\t%sPATH\tPIN\t\n", userColumn)
 	}
 
 	for _, entry := range entries {
@@ -357,9 +357,10 @@ func handleList(ctx *cli.Context, ctl *client.Client) error {
 
 		fmt.Fprintf(
 			tabW,
-			"%s\t%s\t%s%s\t%s\t\n",
+			"%s\t%s\t%s\t%s%s\t%s\t\n",
 			colorForSize(entry.Size)(humanize.Bytes(entry.Size)),
-			entry.ModTime.Format(time.UnixDate),
+			colorForSize(entry.Size)(humanize.Bytes(entry.CachedSize)),
+			entry.ModTime.Format("2006-01-02 15:04:05 MST"),
 			userEntry,
 			coloredPath,
 			pinState,
@@ -509,6 +510,7 @@ func handleShowFileOrDir(ctx *cli.Context, ctl *client.Client, path string) erro
 	printPair("User", info.User)
 	printPair("Type", nodeType)
 	printPair("Size", fmt.Sprintf("%s (%d bytes)", humanize.Bytes(info.Size), info.Size))
+	printPair("Backend Size", fmt.Sprintf("%s (%d bytes)", humanize.Bytes(info.CachedSize), info.CachedSize))
 	printPair("Inode", strconv.FormatUint(info.Inode, 10))
 	printPair("Pinned", pinState)
 	printPair("Explicit", explicitState)
