@@ -1,3 +1,18 @@
+brig-ipfs (0.4.2~4.e0afad19) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * bug fix: repinner used uint64 where stored value might be negative
+  * bug-fix: repinner should not try to pin or unpin ghosts
+  * improvement: use default compression for files with unknown mime
+  * added CachedSize methods to report size of the data at backend
+  * make capnp template compatible with capnp of older versions than 0.7
+  * capnp can transmit cachedSize for a file now
+  * file node has properly stored and reported by 'show' cachedSize
+  * listing report backend file size
+  * shorten time format for listings
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Fri, 03 Jul 2020 23:05:54 -0400
+
 brig-ipfs (0.4.2~3.46e22d7d) buster-evmik; urgency=medium
 
   [ Eugeniy E. Mikhailov ]
