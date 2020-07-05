@@ -100,7 +100,7 @@ func (fs *FS) ensurePin(entries []n.ModNode) (uint64, error) {
 		if err != nil {
 			return newlyPinned, err
 		}
-		if nd.Type() == n.NodeTypeFile {
+		if nd.Type() == n.NodeTypeFile && isPinned {
 			// let's make sure that this file node is pinned at backend as well
 			isCached, err := fs.bk.IsCached(nd.BackendHash())
 			if err != nil {
@@ -141,7 +141,8 @@ func (fs *FS) ensureUnpin(entries []n.ModNode) (uint64, error) {
 		}
 
 		if isPinned {
-			if err := fs.pinner.UnpinNode(nd, false); err != nil {
+			explicit := true // we are unpinning even explicitly pinned
+			if err := fs.pinner.UnpinNode(nd, explicit); err != nil {
 				return 0, err
 			}
 
@@ -201,7 +202,8 @@ func (fs *FS) balanceQuota(ps []*partition, totalStorage, quota uint64) (uint64,
 		totalStorage -= cnd.Size()
 		savedStorage += cnd.Size()
 
-		if err := fs.pinner.UnpinNode(cnd, false); err != nil {
+		explicit := true // we are unpinning even explicitly pinned
+		if err := fs.pinner.UnpinNode(cnd, explicit); err != nil {
 			return 0, err
 		}
 

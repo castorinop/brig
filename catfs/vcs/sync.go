@@ -57,6 +57,11 @@ func ConflictStrategyFromString(spec string) ConflictStrategy {
 	}
 }
 
+// Handy structure to use during handleMerge to store the node info in which we merge
+type PinStats struct {
+	Pinned, Explicit bool
+}
+
 // SyncOptions gives you the possibility to configure the sync algorithm.
 type SyncOptions struct {
 	ConflictStrategy          ConflictStrategy
@@ -68,7 +73,7 @@ type SyncOptions struct {
 
 	OnAdd      func(newNd n.ModNode) bool
 	OnRemove   func(oldNd n.ModNode) bool
-	OnMerge    func(src, dst n.ModNode) bool
+	OnMerge    func(nd n.ModNode, isGet bool, ndPinStats *PinStats) bool
 	OnConflict func(src, dst n.ModNode) bool
 }
 
@@ -348,7 +353,7 @@ func (sy *syncer) handleMerge(src, dst n.ModNode, srcMask, dstMask ChangeType) e
 		return err
 	}
 
-	if err := dstParent.RemoveChild(sy.lkrSrc, dst); err != nil {
+	if err := dstParent.RemoveChild(sy.lkrDst, dst); err != nil {
 		return err
 	}
 
@@ -362,9 +367,16 @@ func (sy *syncer) handleMerge(src, dst n.ModNode, srcMask, dstMask ChangeType) e
 		return ie.ErrBadNode
 	}
 
+	oldDstPinStats := PinStats {false, false}
+	isGet := true
+	if sy.cfg.OnMerge != nil {
+		sy.cfg.OnMerge(dst, isGet, &oldDstPinStats) 
+	}
+
 	dstFile.SetContent(sy.lkrDst, srcFile.ContentHash())
 	dstFile.SetBackend(sy.lkrDst, srcFile.BackendHash())
 	dstFile.SetSize(srcFile.Size())
+	dstFile.SetCachedSize(srcFile.CachedSize())
 	dstFile.SetKey(srcFile.Key())
 
 	if err := dstParent.Add(sy.lkrDst, dstFile); err != nil {
@@ -372,7 +384,7 @@ func (sy *syncer) handleMerge(src, dst n.ModNode, srcMask, dstMask ChangeType) e
 	}
 
 	if sy.cfg.OnMerge != nil {
-		if !sy.cfg.OnMerge(src, dst) {
+		if !sy.cfg.OnMerge(dst, !isGet, &oldDstPinStats) {
 			return nil
 		}
 	}
