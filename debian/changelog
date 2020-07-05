@@ -1,3 +1,16 @@
+brig-ipfs (0.4.2~7.835a06f7) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * bug-fix: repinner must not pin/cache at backend  if pin is not set
+  * bug-fix: was not updating cachedSize on file merge
+  * bug-fix: on merge dst was removed from src linker, which is wrong
+  * bug-fix: when merging during the sync operation  preserve the pin status
+  * Repinner unpins explicitly pinned files, otherwise we will have storage problems
+  * Directories track cached size (i.e. size at backend)
+  * implement missing CachedSize for a mock TmpFsBackend
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Sun, 05 Jul 2020 15:31:35 -0400
+
 brig-ipfs (0.4.2~6.5f90a52a) buster-evmik; urgency=medium
 
   [ Eugeniy E. Mikhailov ]
