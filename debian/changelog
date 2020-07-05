@@ -1,3 +1,15 @@
+brig-ipfs (0.4.2~6.5f90a52a) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * new feature: do not pin/cache at sync newly added file (controlled by fs.sync.pin_added)
+  * listing now shows backend cached state
+  * hadnling unpinning border case: when our data report a pin but ipfs is not
+  * repinner would pin (i.e. cache) file node at ipfs, if it is labeled as pinned
+  * better report of newlyPinned out of ensurePin
+  * new option fs.repin.pin_unpinned to control repinner behavior
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Sat, 04 Jul 2020 21:13:53 -0400
+
 brig-ipfs (0.4.2~5.f7a6677d) buster-evmik; urgency=medium
 
   [ Eugeniy E. Mikhailov ]
