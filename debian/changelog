@@ -1,3 +1,19 @@
+brig-ipfs (0.5.0~0.5e3b4624) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * fuse: proper file size for copy operations
+  * fuse: made sure that attributes are not stale
+  * simplified data load into the handle data structure
+  * moved handle loading code to handle.go
+  * added leftovers which I forgot to put several patches before
+  * removed debugging output
+  * bug fix: touch should be able to make new node over a ghost node
+  * fuse: removed Rename for a file node, it is never called
+  * fuse: implemented Rename or move files or directories
+  * changelog update
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Mon, 13 Jul 2020 16:07:32 -0400
+
 brig-ipfs (0.4.2~7.835a06f7) buster-evmik; urgency=medium
 
   [ Eugeniy E. Mikhailov ]
