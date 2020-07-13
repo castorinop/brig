@@ -5,14 +5,11 @@ package fuse
 import (
 	"errors"
 	"os"
-	"path"
-	"time"
 
 	"context"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -23,6 +20,7 @@ var (
 type File struct {
 	path string
 	m    *Mount
+	hd   *Handle
 }
 
 // Attr is called to get the stat(2) attributes of a file.
@@ -36,7 +34,11 @@ func (fi *File) Attr(ctx context.Context, attr *fuse.Attr) error {
 	debugLog("exec file attr: %v", fi.path)
 
 	attr.Mode = 0755
-	attr.Size = info.Size
+	if fi.hd != nil && fi.hd.writers > 0 {
+		attr.Size = uint64(len(fi.hd.data))
+	} else {
+		attr.Size = info.Size
+	}
 	attr.Mtime = info.ModTime
 	attr.Inode = info.Inode
 
@@ -59,6 +61,7 @@ func (fi *File) Attr(ctx context.Context, attr *fuse.Attr) error {
 // Open is called to get an opened handle of a file, suitable for reading and writing.
 func (fi *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fs.Handle, error) {
 	defer logPanic("file: open")
+	debugLog("fuse-open: %s", fi.path)
 
 	// Check if the file is actually available locally.
 	if fi.m.options.Offline {
@@ -72,13 +75,31 @@ func (fi *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.Open
 		}
 	}
 
-	debugLog("fuse-open: %s", fi.path)
 	fd, err := fi.m.fs.Open(fi.path)
 	if err != nil {
 		return nil, errorize("file-open", err)
 	}
 
-	return &Handle{fd: fd, m: fi.m}, nil
+	if fi.hd == nil {
+		hd := Handle{fd: fd, m: fi.m, writers: 0, wasModified: false}
+		fi.hd = &hd
+	}
+	fi.hd.fd=fd
+	if req.Flags.IsReadOnly() {
+		// we don't need to track read-only handles
+		// and no need to set handle `data`
+		return fi.hd, nil
+	}
+
+	// for writers we need to copy file data to the handle `data`
+	if fi.hd.writers == 0 {
+		err = fi.hd.loadData( fi.path )
+		if err != nil {
+			return nil, errorize("file-open-loadData", err)
+		}
+	}
+	fi.hd.writers++
+	return fi.hd, nil
 }
 
 // Setattr is called once an attribute of a file changes.
@@ -93,7 +114,7 @@ func (fi *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fus
 	debugLog("exec file setattr")
 	switch {
 	case req.Valid&fuse.SetattrSize != 0:
-		if err := fi.m.fs.Truncate(fi.path, req.Size); err != nil {
+		if err := fi.hd.truncate(req.Size); err != nil {
 			return errorize("file-setattr-size", err)
 		}
 	case req.Valid&fuse.SetattrMtime != 0:
@@ -134,26 +155,6 @@ func (fi *File) Listxattr(ctx context.Context, req *fuse.ListxattrRequest, resp 
 
 	debugLog("exec file listxattr")
 	resp.Xattr = listXattr(req.Size)
-	return nil
-}
-
-// Rename is called when the node changed its path.
-func (fi *File) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fs.Node) error {
-	defer logPanic("file: rename")
-
-	debugLog("exec file rename")
-	newParent, ok := newDir.(*Directory)
-	if !ok {
-		return fuse.EIO
-	}
-
-	newPath := path.Join(newParent.path, req.NewName)
-	if err := fi.m.fs.Move(fi.path, newPath); err != nil {
-		log.Warningf("fuse: file: mv: %v", err)
-		return err
-	}
-
-	notifyChange(fi.m, 100*time.Millisecond)
 	return nil
 }
 
