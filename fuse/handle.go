@@ -28,27 +28,39 @@ type Handle struct {
 	// only valid if writers > 0, data used as a buffer for write operations
 	data []byte
 	wasModified bool
+	currentFileReadOffset int64
 
 }
 
 func (hd *Handle) loadData(path string) (error) {
+	// Reads the whole file into the memory buffer
+	log.Error("fuse: loadData for ", path)
 	hd.data = nil
 	hd.wasModified = false
-	fd, err := hd.m.fs.Open(path)
+	// rewind to start
+	newOff, err := hd.fd.Seek(0, io.SeekStart)
 	if err != nil {
-		return errorize("file-loadData", err)
+		return errorize("handle-loadData-seek", err)
 	}
-	var bufSize int = 128*1024
+	if newOff != 0 {
+		log.Warningf("seek offset differs (want %d, got %d)", 0, newOff)
+		return errorize("handle-loadData-seek", err)
+	}
+	// TODO make large buffer, right now there is a problem
+	// with the underlying Read(buf) which  seems to be
+	// limitedStream with the default size of 64kB.
+	// so there is no way to read file faster than in 64kB chunks
+	var bufSize int = 64*1024
 	buf := make([]byte, bufSize)
 	var data []byte
 	for {
-		n, err := fd.Read(buf)
+		n, err := hd.fd.Read(buf)
 		isEOF := (err == io.ErrUnexpectedEOF || err == io.EOF)
 		if err != nil && !isEOF {
 			return errorize("file-loadData", err)
 		}
 		data = append(data, buf[:n]...)
-		if isEOF {
+		if isEOF && n == 0 {
 			break
 		}
 	}
@@ -63,22 +75,26 @@ func (hd *Handle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.Re
 	defer hd.mu.Unlock()
 	defer logPanic("handle: read")
 
-	log.WithFields(log.Fields{
-		"path":   hd.fd.Path(),
-		"offset": req.Offset,
-		"size":   req.Size,
-	}).Debugf("fuse: handle: read")
+	// log.WithFields(log.Fields{
+		// "path":   hd.fd.Path(),
+		// "offset": req.Offset,
+		// "size":   req.Size,
+	// }).Debugf("fuse: handle: read")
 
-	// if we have writers we need to suply response from the data buffer
+	// if we have writers we can supply response from the write data buffer
 	if hd.writers != 0 {
 		fuseutil.HandleRead(req, resp, hd.data)
 		return nil
 	}
 
-	// otherwise we will read from the brig filesystem directly
-	newOff, err := hd.fd.Seek(req.Offset, io.SeekStart)
-	if err != nil {
-		return errorize("handle-read-seek", err)
+	// otherwise we will read from the brig file system directly
+	newOff := hd.currentFileReadOffset
+	if req.Offset != hd.currentFileReadOffset {
+		var err error
+		newOff, err = hd.fd.Seek(req.Offset, io.SeekStart)
+		if err != nil {
+			return errorize("handle-read-seek", err)
+		}
 	}
 
 	if newOff != req.Offset {
@@ -89,6 +105,7 @@ func (hd *Handle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.Re
 	if err != nil && err != io.EOF {
 		return errorize("handle-read-io", err)
 	}
+	hd.currentFileReadOffset = newOff + int64(n)
 
 	resp.Data = resp.Data[:n]
 	return nil
