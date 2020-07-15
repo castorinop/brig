@@ -1,3 +1,14 @@
+brig-ipfs (0.5.1~0.44508321) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * Spelling fixes
+  * fuse: bug-fix large files were truncated to 64kB during read/load data
+  * fuse: major file read speedup
+  * fuse: when file is opened set seek position (currentFileReadOffset) to an impossible number
+  * fuse: handle read will not spam with debug about requested read parameters
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Wed, 15 Jul 2020 10:37:05 -0400
+
 brig-ipfs (0.5.0~0.5e3b4624) buster-evmik; urgency=medium
 
   [ Eugeniy E. Mikhailov ]
