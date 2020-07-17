@@ -1,3 +1,11 @@
+brig-ipfs (0.5.2~0.0b9e7270) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * bug fix: correct cache status for a hash with multiple child links
+  * improvement: ls command on exact path of a file returns listing for that file
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Thu, 16 Jul 2020 22:24:54 -0400
+
 brig-ipfs (0.5.1~0.44508321) buster-evmik; urgency=medium
 
   [ Eugeniy E. Mikhailov ]
