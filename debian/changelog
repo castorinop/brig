@@ -1,3 +1,12 @@
+brig-ipfs (0.5.3~0.5fa2fd1a) buster-evmik; urgency=medium
+
+  [ Eugeniy E. Mikhailov ]
+  * Speed up of IsCached method for a given root hash with ipfs backend
+  * The interaction with ipfs backend is cached and thus much faster now
+  * Heuristic: do not check for children for links with size of 262158 bytes or less
+
+ -- Eugeniy Mikhailov <evgmik@gmail.com>  Mon, 20 Jul 2020 14:39:51 -0400
+
 brig-ipfs (0.5.2~0.0b9e7270) buster-evmik; urgency=medium
 
   [ Eugeniy E. Mikhailov ]
